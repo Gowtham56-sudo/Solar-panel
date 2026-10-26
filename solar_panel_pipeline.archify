@@ -1,0 +1,187 @@
+schema_version: 2
+diagram_type: "workflow"
+meta:
+  title: "Solar Panel Defect Detection Pipeline (Dual Thermal-Visual Fusion)"
+  output: "solar_pipeline_flow.html"
+
+lanes:
+  - id: "lane_inputs"
+    label: "1. DATA INPUT MODALITIES"
+  - id: "lane_branches"
+    label: "2. DUAL BRANCH PROCESSING"
+  - id: "lane_fusion"
+    label: "3. IMAGE FUSION & SEGMENTATION"
+  - id: "lane_classifier"
+    label: "4. DEFECT CLASSIFICATION & SEVERITY"
+  - id: "lane_deliverables"
+    label: "5. DELIVERABLES & INTERFACE"
+
+nodes:
+  # Lane 1: Inputs
+  - id: "node_rgb"
+    lane: "lane_inputs"
+    col: 1
+    yOffset: -100
+    width: 180
+    type: "external"
+    label: "RGB Image"
+    sublabel: "Visual Light Camera"
+
+  - id: "node_ir"
+    lane: "lane_inputs"
+    col: 1
+    yOffset: 0
+    width: 180
+    type: "external"
+    label: "Thermal IR"
+    sublabel: "80x60 CSV Matrix"
+
+  - id: "node_elec"
+    lane: "lane_inputs"
+    col: 1
+    yOffset: 100
+    width: 180
+    type: "database"
+    label: "Electrical Data"
+    sublabel: "V & I (.mat curves)"
+
+  # Lane 2: Processing Branches
+  - id: "node_vis_proc"
+    lane: "lane_branches"
+    col: 2
+    yOffset: -70
+    width: 180
+    type: "backend"
+    label: "Visual Filter"
+    sublabel: "CLAHE & Canny Edge"
+
+  - id: "node_therm_proc"
+    lane: "lane_branches"
+    col: 2
+    yOffset: 70
+    width: 180
+    type: "backend"
+    label: "Thermal Filter"
+    sublabel: "T_max & Delta T"
+
+  # Lane 3: Fusion & Segmentation
+  - id: "node_imfuse"
+    lane: "lane_fusion"
+    col: 3
+    yOffset: -70
+    width: 180
+    type: "backend"
+    label: "imfuse Fusion"
+    sublabel: "Thermal-Visual Blend"
+
+  - id: "node_regionprops"
+    lane: "lane_fusion"
+    col: 3
+    yOffset: 70
+    width: 180
+    type: "backend"
+    label: "Feature Extract"
+    sublabel: "regionprops stats"
+
+  # Lane 4: Classifier & Severity
+  - id: "node_decision_tree"
+    lane: "lane_classifier"
+    col: 4
+    yOffset: -70
+    width: 180
+    type: "backend"
+    label: "Decision Tree"
+    sublabel: "Defect Classifier"
+
+  - id: "node_severity"
+    lane: "lane_classifier"
+    col: 4
+    yOffset: 70
+    width: 180
+    type: "backend"
+    label: "Severity Rating"
+    sublabel: "Low to Critical"
+
+  # Lane 5: Deliverables
+  - id: "node_dashboard"
+    lane: "lane_deliverables"
+    col: 5
+    yOffset: -100
+    width: 180
+    type: "frontend"
+    label: "MATLAB Dashboard"
+    sublabel: "4-Quadrant Live UI"
+
+  - id: "node_report"
+    lane: "lane_deliverables"
+    col: 5
+    yOffset: 0
+    width: 180
+    type: "backend"
+    label: "Defect Report"
+    sublabel: "PDF & PNG Summary"
+
+  - id: "node_iv_pv"
+    lane: "lane_deliverables"
+    col: 5
+    yOffset: 100
+    width: 180
+    type: "frontend"
+    label: "I-V & P-V Plot"
+    sublabel: "Power Loss (%)"
+
+edges:
+  - id: "e1"
+    from: "node_rgb"
+    to: "node_vis_proc"
+    label: "RGB stream"
+
+  - id: "e2"
+    from: "node_ir"
+    to: "node_therm_proc"
+    label: "IR stream"
+
+  - id: "e3"
+    from: "node_vis_proc"
+    to: "node_imfuse"
+    label: "Edges"
+
+  - id: "e4"
+    from: "node_therm_proc"
+    to: "node_imfuse"
+    label: "Thermal map"
+
+  - id: "e5"
+    from: "node_imfuse"
+    to: "node_regionprops"
+    label: "Fused image"
+
+  - id: "e6"
+    from: "node_regionprops"
+    to: "node_decision_tree"
+    label: "Shape stats"
+
+  - id: "e7"
+    from: "node_therm_proc"
+    to: "node_decision_tree"
+    label: "Delta T"
+
+  - id: "e8"
+    from: "node_decision_tree"
+    to: "node_severity"
+    label: "Defect type"
+
+  - id: "e9"
+    from: "node_severity"
+    to: "node_dashboard"
+    label: "Live Telemetry"
+
+  - id: "e10"
+    from: "node_severity"
+    to: "node_report"
+    label: "Auto export"
+
+  - id: "e11"
+    from: "node_elec"
+    to: "node_iv_pv"
+    label: "I-V points"
