@@ -317,7 +317,9 @@ function solar_dashboard()
         end
         set(txt_area, 'String', 'Affected Surface: --- %');
         set(txt_rec, 'String', 'Click "Run Full Detection" to analyze.');
-        update_log(sprintf('✓ Loaded %s ready.', key));
+        update_log(sprintf('✓ Loaded %s ready. Running analysis...', key));
+        % Automatically run analysis so Quadrants 3 and 4 show immediately!
+        on_run_analysis([], []);
     end
 
     function on_run_analysis(~, ~)
